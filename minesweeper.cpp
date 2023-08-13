@@ -1,12 +1,8 @@
 /*
+  A Console-Based Minesweeper Clone
   Brandon Frauenfeld
-  How quickly can I make a minesweeper clone in C++?
-  Started: 6:27 PM, 7/29/2023
-  Paused: 6:38 PM, 7/29/2023
-  Resumed: 2:35 PM, 7/30/2023
-  Paused: 2:52 PM, 7/30/2023
+  
 */
-#define _WIN32_WINNT 0x0500
 
 #include <iostream>
 #include <stdio.h>
@@ -17,6 +13,21 @@
 using namespace std;
 
 int gameBoard[9][9];
+
+
+// updates the game table based on a user's click on correct pos.
+void updateTable() {
+  
+}
+
+// sets the position of the console's cursor to the specified x,y
+// is not the mouse cursor
+void gotoxy(int x, int y) {
+  COORD coord;
+  coord.X = x;
+  coord.Y = y;
+  SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
+}
 
 void initBoard() {
   // init board. 0 is no mine, 1 is a mine. limit of 20 mines.
@@ -51,55 +62,54 @@ void printBoardDebug() {
 }
 
 int main() {
-  HWND consoleWindow = GetConsoleWindow();
+  // code to set up the window
+  // -------------------------
 
-  SetWindowLong(consoleWindow, GWL_STYLE, GetWindowLong(consoleWindow, GWL_STYLE) 
-  & ~WS_MAXIMIZEBOX & ~WS_SIZEBOX); // make window unresizeable by user
+    HWND consoleWindow = GetConsoleWindow();
+    SetWindowLong(consoleWindow, GWL_STYLE, GetWindowLong(consoleWindow, GWL_STYLE) 
+    & ~WS_MAXIMIZEBOX & ~WS_SIZEBOX); // make window unresizeable by user
 
-  RECT rect = {100, 100, 500, 500};
-  MoveWindow(consoleWindow, rect.left, rect.top, rect.right-rect.left, 
-  rect.bottom-rect.top, TRUE);  // set console window size
-  
-  cout << "Welcome to Minesweeper! Made by Brandon Frauenfeld in .";
+    RECT rect = {100, 100, 500, 500}; // 500x500 px window
+    MoveWindow(consoleWindow, rect.left, rect.top, rect.right-rect.left, 
+    rect.bottom-rect.top, TRUE);  // set console window size
 
+  // -------------------------
   // code to remove scroll ability and scrollbar 
-  // --------
-  
-  // get handle to the console window
-    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+  // -------------------------
 
+    // get handle to the console window
+    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
     // retrieve screen buffer info
     CONSOLE_SCREEN_BUFFER_INFO scrBufferInfo;
     GetConsoleScreenBufferInfo(hOut, &scrBufferInfo);
-
     // current window size
-    short winWidth = scrBufferInfo.srWindow.Right - scrBufferInfo.srWindow.Left + 1;
+    short winWidth = scrBufferInfo.srWindow.Right - scrBufferInfo.srWindow.Left + 1; 
     short winHeight = scrBufferInfo.srWindow.Bottom - scrBufferInfo.srWindow.Top + 1;
-
     // current screen buffer size
     short scrBufferWidth = scrBufferInfo.dwSize.X;
     short scrBufferHeight = scrBufferInfo.dwSize.Y;        
-
     // to remove the scrollbar, make sure the window height matches the screen buffer height
     COORD newSize;
     newSize.X = scrBufferWidth;
     newSize.Y = winHeight;
-
     // set the new screen buffer dimensions
     int Status = SetConsoleScreenBufferSize(hOut, newSize);
-    if (Status == 0)
-    {
-        cout << "SetConsoleScreenBufferSize() failed! Reason : " << GetLastError() << endl;
-        exit(Status);
-    }
+    if (Status == 0) {
+          cout << "SetConsoleScreenBufferSize() failed! Reason : " << GetLastError() << endl;
+          exit(Status);
+      }
 
-    // print the current screen buffer dimensions
-    GetConsoleScreenBufferInfo(hOut, &scrBufferInfo);
-    cout << "Screen Buffer Size : " << scrBufferInfo.dwSize.X << " x " << scrBufferInfo.dwSize.Y << endl;
+  // -------------------------
 
-    // --------
+  cout << "            Welcome to Minesweeper!\n          Made by Brandon Frauenfeld\n";
 
-
+  HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE); // to handle mouse input
+  INPUT_RECORD InputRecord; // input events in console buffer: mouse events, key events, etc
+  DWORD Events;
+  COORD coord;
+  CONSOLE_CURSOR_INFO cci; 
+  cci.dwSize = 1; // redundant
+  cci.bVisible = FALSE; // do not allow cursor to be visible
   initBoard();
   printBoardDebug();
   system("pause");
