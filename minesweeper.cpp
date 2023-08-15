@@ -51,6 +51,18 @@ void initBoard() {
   }
 }
 
+// prints a board that remains to be clicked.
+// after this board is printed, init the board.
+// ensure there is no mine where the player clicks.
+void printInitialBoard() {
+  // board begins at x=14, y=3. goto this pos, 
+  // increment i instead of newline
+  for (int i = 0; i < 9; i++) {
+    gotoxy(14, i+3);
+    cout << "? ? ? ? ? ? ? ? ?";
+  }
+}
+
 void printBoardDebug() {
   for (int i = 0; i < 9; i++) {
     printf("\n");
@@ -103,6 +115,8 @@ int main() {
 
   cout << "            Welcome to Minesweeper!\n          Made by Brandon Frauenfeld\n";
 
+  // initializing everything to handle mouse inputs
+  // -------------------------
   HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE); // to handle mouse input
   INPUT_RECORD InputRecord; // input events in console buffer: mouse events, key events, etc
   DWORD Events;
@@ -110,9 +124,31 @@ int main() {
   CONSOLE_CURSOR_INFO cci; 
   cci.dwSize = 1; // redundant
   cci.bVisible = FALSE; // do not allow cursor to be visible
-  initBoard();
-  printBoardDebug();
-  system("pause");
+
+  SetConsoleCursorInfo(hOut, &cci);
+  SetConsoleMode(hIn, ENABLE_PROCESSED_INPUT | ENABLE_MOUSE_INPUT);
+  // -------------------------
+
+  // actual game loop
+  printInitialBoard();
+  while(1) {
+    // loop: read input first, then handle, then read, etc
+    
+    ReadConsoleInput(hIn, &InputRecord, 1, &Events); // to capture mouse pos in window
+
+    if (GetAsyncKeyState(VK_LBUTTON) & 0x8000 != 0) {
+      int lMouseX = InputRecord.Event.MouseEvent.dwMousePosition.X;
+      int lMouseY = InputRecord.Event.MouseEvent.dwMousePosition.Y;
+      cout << "lmb pressed at " << lMouseX << ", " << lMouseY << ".\n";
+    }
+
+    if (GetAsyncKeyState(VK_RBUTTON) & 0x8000 != 0) {
+      int rMouseX = InputRecord.Event.MouseEvent.dwMousePosition.X;
+      int rMouseY = InputRecord.Event.MouseEvent.dwMousePosition.Y;
+      cout << "rmb pressed at " << rMouseX << ", " << rMouseY << ".\n";
+    }
+    
+  }
 }
 
 
