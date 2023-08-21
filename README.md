@@ -25,3 +25,10 @@ As of 8/20/2023, the game is "functional", but lacks a game over screen, reset b
 It also first displays all the mines to the user for testing. 
 
 I would still like to add all of that. 
+
+To compile, I used g++, with the following: 
+
+g++ minesweeper.cpp -o minesweeper.exe -static
+
+It is good practice not to trust random .exe's found, and compile things yourself. 
+You can also live dangerously, if you want. So, I will include the .exe when it's all done.
