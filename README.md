@@ -28,6 +28,9 @@ It also first displays all the mines to the user for testing.
 
 I would still like to add all of that. 
 
+As of 8/21/2023, the player can now lose, there is a reset button, and a debug button. There is no win condiiton yet.
+The searching algorithm now more closely mimics the original.
+
 To compile, I used g++, with the following: 
 
 g++ minesweeper.cpp -o minesweeper.exe -static
