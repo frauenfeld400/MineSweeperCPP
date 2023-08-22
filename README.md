@@ -1,7 +1,7 @@
 # MineSweeperCPP
 Minesweeper written in C++.
 
-NOTICE: This only works on Windows. If you compile, and it does not work, disable Quick Edit mode in your console.
+NOTICE: This only works on Windows. If you compile, and the .exe does not work, disable Quick Edit mode in your console.
 
 Originally a project to determine how quickly I could make an extremely simple minesweeper clone in C++,
 this project evolved into me wanting to create a fully functioning text-based minesweeper clone, and 
