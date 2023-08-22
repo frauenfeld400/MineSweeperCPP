@@ -4,19 +4,10 @@
 */
 /*
   TODO: 
-  1. need a function to update the board
-  1a. this function must draw from some list of coordinates that function as flags set by user
+  1. need to add in flags
   2. need win condition
   2a. this win condition is likely a mixture of revealed tiles and flagged mines
-  3. need revealing algorithm
-  3a. likely best to: 
-  from origin given (xy) by user click: 
-    see if current square has no mines in vicinity
-    reveal if so. if mine, boom
-    if mines in vicinity, deploy proper number
-    for each square without mines in vicinity, recursively insert origin into func
-    repeat until no more empty squares
-    do need a way to make sure we dont go back into already revealed squares
+  3. need to make it so mines generate after user clicks, so user does not click on mine first thing
 */
 #include <iostream>
 #include <stdio.h>
@@ -26,24 +17,62 @@
 
 using namespace std;
 
+int gameBoard[18][9]; // board pos is 14, 4 to 31, 12.
+char displayBoard[18][9]; // what is displayed to user
+int revealedBoard[18][9]; // what has been revealed
+
+int mines;
+int inputLocked = 0;
+
 void gotoxy(int x, int y);
 void setcolor(WORD color);
 void boom();
 char toChar(int given);
 void updateTable();
+void initBoard();
+void initRevealBoard();
+void printInitialBoard();
 
-int gameBoard[18][9]; // board pos is 14, 4 to 31, 12.
-char displayBoard[18][9]; // what is displayed to user
-int revealedBoard[18][9]; // what has been revealed
-
-
-int mines;
+// resets all tables and game state.
+void resetTables() {
+  inputLocked = 0;
+  setcolor(15);
+  gotoxy(17, 15);
+  cout << "  ";
+  gotoxy(26, 15);
+  cout << "  ";
+  gotoxy(22, 3);
+  cout << ":)";
+  for (int i = 0; i < 18; i++) {
+    for (int j = 0; j < 9; j++) {
+      displayBoard[i][j] = '?';
+    }
+  }
+  initBoard();
+  initRevealBoard();
+  printInitialBoard();
+}
 
 void boom() {
-  // game over! TODO
-
-  gotoxy(0, 17);
-  cout << "BOOM!";
+  // game over! 
+  // reveal all mines, lock user input.
+  gotoxy(17, 15);
+  cout << "->";
+  gotoxy(26, 15);
+  cout << "<-";
+  gotoxy(22, 3);
+  cout << "X(";
+  setcolor(240);
+  inputLocked = 1;
+  for (int i = 0; i < 18; i++) {
+    for (int j = 0; j < 9; j++) {
+      if (gameBoard[i][j] == 1) {
+        gotoxy(i+14, j+4);
+        cout << "*";
+      }
+    }
+  }
+  setcolor(15);
   return;
 }
 void search(int x, int y) {
@@ -62,8 +91,8 @@ void search(int x, int y) {
   int xArray[8]; // for each pos to visit if no mines (excluding center)
   int yArray[8];
   if (x > 31 || y > 12 || x < 14 || y < 4) {
-    gotoxy(0, 18);
-    cout << "out of bounds";
+    //gotoxy(0, 18);
+    //cout << "out of bounds";
     return;
   }
   // init the coordinate arrays
@@ -80,8 +109,8 @@ void search(int x, int y) {
 
   if (gameBoard[xCoord][yCoord] ==  1) { // origin
     // mine here!
-    gotoxy(0, 16);
-    cout << "set * to displayBoard[" << xCoord << "][" << yCoord << "].";
+    //gotoxy(0, 16);
+    //cout << "set * to displayBoard[" << xCoord << "][" << yCoord << "].";
     displayBoard[xCoord][yCoord] = '*';
     updateTable();
     boom();
@@ -91,7 +120,7 @@ void search(int x, int y) {
   gotoxy(0, 16); 
   if (xCoord != 0) { // left side of origin
     if (gameBoard[xCoord-1][yCoord] == 1) {
-      cout << "mine found at " << xCoord-1 << ", " << yCoord;
+      //cout << "mine found at " << xCoord-1 << ", " << yCoord;
       minesFound++;
     } else {
       xArray[0] = xCoord-1;
@@ -101,7 +130,7 @@ void search(int x, int y) {
 
   if (xCoord != 17) { // right side of origin
     if (gameBoard[xCoord+1][yCoord] == 1) {
-      cout << "mine found at " << xCoord+1 << ", " << yCoord;
+      //cout << "mine found at " << xCoord+1 << ", " << yCoord;
       minesFound++;
     } else {
       xArray[1] = xCoord+1;
@@ -111,7 +140,7 @@ void search(int x, int y) {
 
   if (yCoord != 0) { // top of origin
     if (gameBoard[xCoord][yCoord-1] == 1) {
-      cout << "mine found at " << xCoord << ", " << yCoord-1;
+      //cout << "mine found at " << xCoord << ", " << yCoord-1;
       minesFound++;
     } else {
       xArray[2] = xCoord;
@@ -121,7 +150,7 @@ void search(int x, int y) {
 
   if (yCoord != 8) { // bottom of origin
     if (gameBoard[xCoord][yCoord+1] == 1) {
-      cout << "mine found at " << xCoord << ", " << yCoord+1;
+      //cout << "mine found at " << xCoord << ", " << yCoord+1;
       minesFound++;
     } else {
       xArray[3] = xCoord;
@@ -131,7 +160,7 @@ void search(int x, int y) {
 
   if (xCoord != 0 && yCoord != 0) { // top left of origin
     if (gameBoard[xCoord-1][yCoord-1] == 1) {
-      cout << "mine found at " << xCoord-1 << ", " << yCoord-1;
+      //cout << "mine found at " << xCoord-1 << ", " << yCoord-1;
       minesFound++;
     } else {
       xArray[4] = xCoord-1;
@@ -141,7 +170,7 @@ void search(int x, int y) {
 
   if (xCoord != 17 && yCoord != 0) { // top right of origin
     if (gameBoard[xCoord+1][yCoord-1] == 1) {
-      cout << "mine found at " << xCoord+1 << ", " << yCoord-1;
+      //cout << "mine found at " << xCoord+1 << ", " << yCoord-1;
       minesFound++;
     } else {
       xArray[5] = xCoord+1;
@@ -151,7 +180,7 @@ void search(int x, int y) {
 
   if (xCoord != 0 && yCoord != 8) { // bottom left of origin
     if (gameBoard[xCoord-1][yCoord+1] == 1){
-      cout << "mine found at " << xCoord-1 << ", " << yCoord+1;
+      //cout << "mine found at " << xCoord-1 << ", " << yCoord+1;
       minesFound++;
     } else {
       xArray[6] = xCoord-1;
@@ -161,7 +190,7 @@ void search(int x, int y) {
 
   if (xCoord != 17 && yCoord != 8) { // bottom right of origin
     if (gameBoard[xCoord+1][yCoord+1] == 1) {
-      cout << "mine found at " << xCoord+1 << ", " << yCoord+1;
+      //cout << "mine found at " << xCoord+1 << ", " << yCoord+1;
       minesFound++;
     } else {
       xArray[7] = xCoord+1;
@@ -173,17 +202,17 @@ void search(int x, int y) {
   revealedBoard[xCoord][yCoord] = 1; // either way, we must mark board pos as revealed.
   // this is so that the algorithm does not re-check an already revealed spot.
   if (minesFound != 0) {
-    gotoxy(0, 20);
-    cout << "found " << minesFound << " mines.";
+    //gotoxy(0, 20);
+    //cout << "found " << minesFound << " mines.";
     displayBoard[xCoord][yCoord] = toChar(minesFound);
     return;
   } else { // mines not found. begin recursive search 
     displayBoard[xCoord][yCoord] = ' ';
-    gotoxy(0, 21);
-    cout << "no mines found";
-    for (int i = 0; i < 8; i++) {
+    //gotoxy(0, 21);
+    //cout << "no mines found";
+    for (int i = 0; i < 4; i++) { // only search up, down, left, right
       gotoxy(0, 15+i);
-      cout << "check: " << xArray[i] << ", " << yArray[i] << ".";
+      //cout << "check: " << xArray[i] << ", " << yArray[i] << ".";
       if (revealedBoard[xArray[i]][yArray[i]] != 1) {
         // only search if not revealed.
         //cout << "searching " << xArray[i] << ", " << yArray[i] << ".";
@@ -252,8 +281,6 @@ void updateTable() {
       cout << displayBoard[j][i];
     }
   }
-  
-
 }
 
 // sets the position of the console's cursor to the specified x,y
@@ -305,6 +332,7 @@ void printInitialBoard() {
 }
 
 void printBoardDebug() {
+  setcolor(15);
   for (int i = 0; i < 9; i++) {
     gotoxy(14, i+4);
     for (int j = 0; j < 18; j++) {
@@ -374,7 +402,15 @@ int main() {
   printInitialBoard();
   initBoard();
   initRevealBoard();
-  printBoardDebug();
+  //printBoardDebug();
+  gotoxy(22, 3);
+  cout << ":)";
+  gotoxy(20, 15);
+  int hoveringReset = 0;
+  cout << "RESET";
+  gotoxy(20, 17);
+  int hoveringDebug = 0;
+  cout << "DEBUG";
   int prevX, prevY = 0; // prev mouse coords
   while(1) {
     // loop: read input first, then handle, then read, etc
@@ -386,8 +422,23 @@ int main() {
       int lMouseY = InputRecord.Event.MouseEvent.dwMousePosition.Y;
       gotoxy(0, 2);
       cout << "lmb pressed at " << lMouseX << ", " << lMouseY << ".\n";
-      search(lMouseX, lMouseY);
-      updateTable();
+      if ((lMouseX >= 20 && lMouseX < 25) && lMouseY == 15) {
+        // user pressed reset button
+        resetTables();
+        continue;
+      }
+      if (inputLocked != 1) {
+        if ((lMouseX >= 20 && lMouseX < 25) && lMouseY == 17) {
+         // user pressed debug button
+         printBoardDebug();
+         continue;
+        }
+        search(lMouseX, lMouseY);
+        if (inputLocked != 1) { // second check needed.
+          updateTable();
+        }
+        
+      }
     }
 
     if (GetAsyncKeyState(VK_RBUTTON) & 0x8000 != 0) {
@@ -405,22 +456,52 @@ int main() {
       if ((mouseX >= 14 && mouseX <= 31) && (mouseY >= 4 && mouseY <= 12)) {
         // check if prev coordinates are different. dehover prev coordinates if so
         if (prevX != mouseX || prevY != mouseY) {
-          dehover(prevX, prevY);
+          if (inputLocked != 1) {
+            dehover(prevX, prevY);
+          }
           prevX = mouseX;
           prevY = mouseY;
         }
-        gotoxy(0,3);
         // TODO debug output
-        cout << "mouse in pos " << mouseX << ", " << mouseY << ".\n";
-        gotoxy(0, 14);
-        cout << "real board pos " << mouseX-14 << ", " << mouseY-4 << ".\n";
-        hover(mouseX, mouseY);
+        //gotoxy(0,3);
+        //cout << "mouse in pos " << mouseX << ", " << mouseY << ".\n";
+        //gotoxy(0, 14);
+        //cout << "real board pos " << mouseX-14 << ", " << mouseY-4 << ".\n";
+        if (inputLocked != 1) {
+          hover(mouseX, mouseY);
+        }
       } else {
         // if mouse has exited, or is not in game board, dehover last known position
-        dehover(prevX, prevY);
+        if (inputLocked != 1) {
+          dehover(prevX, prevY);
+        }
+      }
+
+      // handle RESET button hovering
+      if ((mouseX >= 20 && mouseX < 25) && (mouseY == 15)) {
+        hoveringReset = 1; 
+        setcolor(240);
+        gotoxy(20, 15);
+        cout << "RESET";
+      } else if (hoveringReset == 1) {
+        hoveringReset = 0; // so that it does not print reset forever
+        setcolor(15);
+        gotoxy(20, 15);
+        cout << "RESET";
+      }
+      // handle DEBUG button hovering
+      if ((mouseX >= 20 && mouseX < 25) && mouseY == 17) {
+        hoveringDebug = 1;
+        setcolor(240);
+        gotoxy(20, 17);
+        cout << "DEBUG";
+      } else if (hoveringDebug == 1) {
+        hoveringDebug = 0;
+        setcolor(15);
+        gotoxy(20, 17);
+        cout << "DEBUG";
       }
     }
-    
   }
 }
 
