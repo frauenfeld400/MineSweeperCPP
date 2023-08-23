@@ -3,11 +3,10 @@
   Brandon Frauenfeld
 */
 /*
-  TODO: 
-  1. need to add in flags
-  2. need win condition
-  2a. this win condition is likely a mixture of revealed tiles and flagged mines
-  3. need to make it so mines generate after user clicks, so user does not click on mine first thing
+  TODO:
+  win condition needs work
+  searching algorithm revealing needs work i think
+  make this look more pretty
 */
 #include <iostream>
 #include <stdio.h>
@@ -21,8 +20,12 @@ int gameBoard[18][9]; // board pos is 14, 4 to 31, 12.
 char displayBoard[18][9]; // what is displayed to user
 int revealedBoard[18][9]; // what has been revealed
 
-int mines;
+int mines = 0;
 int inputLocked = 0;
+int firstClick = 1; // so that if user clicks mine, game not over
+int revealedTiles = 0; // win condition
+int winningTiles = 0;
+int flags = 0;
 
 void gotoxy(int x, int y);
 void setcolor(WORD color);
@@ -41,16 +44,20 @@ void resetTables() {
   cout << "  ";
   gotoxy(26, 15);
   cout << "  ";
-  gotoxy(22, 3);
+  gotoxy(22, 2);
   cout << ":)";
+  gotoxy(14, 3);
+  cout << "Flags: ??";
   for (int i = 0; i < 18; i++) {
     for (int j = 0; j < 9; j++) {
       displayBoard[i][j] = '?';
     }
   }
+  firstClick = 1;
   initBoard();
   initRevealBoard();
   printInitialBoard();
+  flags = mines + 3;
 }
 
 void boom() {
@@ -60,7 +67,7 @@ void boom() {
   cout << "->";
   gotoxy(26, 15);
   cout << "<-";
-  gotoxy(22, 3);
+  gotoxy(22, 2);
   cout << "X(";
   setcolor(240);
   inputLocked = 1;
@@ -205,9 +212,11 @@ void search(int x, int y) {
     //gotoxy(0, 20);
     //cout << "found " << minesFound << " mines.";
     displayBoard[xCoord][yCoord] = toChar(minesFound);
+    ++revealedTiles;
     return;
   } else { // mines not found. begin recursive search 
     displayBoard[xCoord][yCoord] = ' ';
+    ++revealedTiles;
     //gotoxy(0, 21);
     //cout << "no mines found";
     for (int i = 0; i < 4; i++) { // only search up, down, left, right
@@ -275,6 +284,12 @@ void setcolor(WORD color){
 
 // updates the game table based on a user's click on correct pos.
 void updateTable() {
+  gotoxy(21, 3);
+  if (flags < 10) { 
+    cout << "0" << flags;
+  } else {
+    cout << flags;
+  }
   for (int i = 0; i < 9; i++) {
     gotoxy(14, i+4);
     for (int j = 0; j < 18; j++) {
@@ -295,6 +310,8 @@ void gotoxy(int x, int y) {
 void initBoard() {
   // init board. 0 is no mine, 1 is a mine.
   mines = 0;
+  winningTiles = 0;
+  revealedTiles = 0;
   srand((unsigned) time(NULL));
   int randNum;
   for (int i = 0; i < 18; i++) {
@@ -306,6 +323,7 @@ void initBoard() {
         ++mines;
         gameBoard[i][j] = 1;
       } else {
+        winningTiles++;
         gameBoard[i][j] = 0;
       } 
     }
@@ -332,6 +350,7 @@ void printInitialBoard() {
 }
 
 void printBoardDebug() {
+  // prints a board with 0 as no mine and 1 as mine.
   setcolor(15);
   for (int i = 0; i < 9; i++) {
     gotoxy(14, i+4);
@@ -382,7 +401,9 @@ int main() {
 
   // -------------------------
   setcolor(15);
-  cout << "            Welcome to Minesweeper!\n          Made by Brandon Frauenfeld\n";
+  cout << "            Welcome to Minesweeper!";
+  gotoxy(10, 20);
+  cout << "Made by Brandon Frauenfeld";
 
   // initializing everything to handle mouse inputs
   // -------------------------
@@ -403,7 +424,7 @@ int main() {
   initBoard();
   initRevealBoard();
   //printBoardDebug();
-  gotoxy(22, 3);
+  gotoxy(22, 2);
   cout << ":)";
   gotoxy(20, 15);
   int hoveringReset = 0;
@@ -411,33 +432,71 @@ int main() {
   gotoxy(20, 17);
   int hoveringDebug = 0;
   cout << "DEBUG";
+  gotoxy(14, 3);
+  cout << "Flags: ??";
+  flags = mines + 3;
   int prevX, prevY = 0; // prev mouse coords
+  int insideBoard = 0;
   while(1) {
     // loop: read input first, then handle, then read, etc
     
     ReadConsoleInput(hIn, &InputRecord, 1, &Events); // to capture mouse pos in window
 
+    // check if user won
+
+    if (revealedTiles == winningTiles) {
+      boom();
+      gotoxy(21, 2);
+      cout << "!";
+      gotoxy(22, 2);
+      cout << ":)";
+      gotoxy(24, 2);
+      cout << "!";
+      gotoxy(19, 3);
+      cout << "YOU WIN!";
+    }
+
     if (GetAsyncKeyState(VK_LBUTTON) & 0x8000 != 0) {
+
       int lMouseX = InputRecord.Event.MouseEvent.dwMousePosition.X;
       int lMouseY = InputRecord.Event.MouseEvent.dwMousePosition.Y;
-      gotoxy(0, 2);
-      cout << "lmb pressed at " << lMouseX << ", " << lMouseY << ".\n";
+
+      //gotoxy(0, 2);
+      //cout << "lmb pressed at " << lMouseX << ", " << lMouseY << ".\n";
+
       if ((lMouseX >= 20 && lMouseX < 25) && lMouseY == 15) {
         // user pressed reset button
         resetTables();
         continue;
       }
+
       if (inputLocked != 1) {
+
         if ((lMouseX >= 20 && lMouseX < 25) && lMouseY == 17) {
          // user pressed debug button
          printBoardDebug();
          continue;
         }
-        search(lMouseX, lMouseY);
+
+        if ((lMouseX >= 14 && lMouseX <= 31) && (lMouseY >= 4 && lMouseY <= 12)) {
+
+          if (firstClick == 1) { // first click of game
+            firstClick = 0;
+            gameBoard[lMouseX-14][lMouseY-4] = 0;
+            --mines;
+          }
+
+          if (displayBoard[lMouseX - 14][lMouseY - 4] == 'X') { // flag, dont do anything
+            continue;
+          }
+          
+          search(lMouseX, lMouseY);
+
+        }
+        
         if (inputLocked != 1) { // second check needed.
           updateTable();
         }
-        
       }
     }
 
@@ -445,7 +504,35 @@ int main() {
       int rMouseX = InputRecord.Event.MouseEvent.dwMousePosition.X;
       int rMouseY = InputRecord.Event.MouseEvent.dwMousePosition.Y;
       gotoxy(0, 2);
-      cout << "rmb pressed at " << rMouseX << ", " << rMouseY << ".\n";
+      //cout << "rmb pressed at " << rMouseX << ", " << rMouseY << ".\n";
+      if (firstClick == 1) {
+        continue; // user has not clicked yet, do not place flag
+      }
+      if (inputLocked == 1) {
+        continue; // user lost or won
+      }
+      if ((rMouseX >= 14 && rMouseX <= 31) && (rMouseY >= 4 && rMouseY <= 12)) {
+        cout << "in bounds";
+        // if in bounds, put flag denoted by X. but only if it is not an empty tile / numbered tile.
+        char given = displayBoard[rMouseX-14][rMouseY-4];
+        if (given == 'X') {
+          // remove flag
+          displayBoard[rMouseX-14][rMouseY-4] = '?';
+          ++flags;
+          updateTable();
+        } else if (given != '?') {
+          // do not place flag
+          continue;
+        } else {
+          if (flags == 0) {
+            continue;
+          }
+          // place flag
+          --flags;
+          displayBoard[rMouseX - 14][rMouseY - 4] = 'X';
+          updateTable();
+        }
+      }
     }
     
     if (MOUSE_EVENT) {
@@ -454,6 +541,7 @@ int main() {
       int mouseY = InputRecord.Event.MouseEvent.dwMousePosition.Y;
       // check if mouse is in bounds of board
       if ((mouseX >= 14 && mouseX <= 31) && (mouseY >= 4 && mouseY <= 12)) {
+        insideBoard = 1;
         // check if prev coordinates are different. dehover prev coordinates if so
         if (prevX != mouseX || prevY != mouseY) {
           if (inputLocked != 1) {
@@ -472,7 +560,8 @@ int main() {
         }
       } else {
         // if mouse has exited, or is not in game board, dehover last known position
-        if (inputLocked != 1) {
+        if (inputLocked != 1 && insideBoard == 1) {
+          insideBoard = 0;
           dehover(prevX, prevY);
         }
       }
