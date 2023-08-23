@@ -31,6 +31,9 @@ I would still like to add all of that.
 As of 8/21/2023, the player can now lose, there is a reset button, and a debug button. There is no win condiiton yet.
 The searching algorithm now more closely mimics the original.
 
+As of 8/21/2023, the player can now win, but it needs fine tuning. The player can also place down flags. I have removed
+many of the debug messages, and I don't think any should pop up anymore.
+
 To compile, I used g++, with the following: 
 
 g++ minesweeper.cpp -o minesweeper.exe -static
