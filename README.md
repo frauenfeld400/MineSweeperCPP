@@ -1,7 +1,30 @@
 # MineSweeperCPP
+
+NOTICE: This only works on Windows. If you compile, and it does not work, disable Quick Edit mode in the console.
+You should be able to click and play as any normal game.
+
 Minesweeper written in C++.
 
-NOTICE: This only works on Windows. If you compile, and the .exe does not work, disable Quick Edit mode in your console.
+As of 8/23/2023, this project is finished. I wanted to add sounds, but that might come in a V2. It's good to wrap things up
+once they are finished, and not spend too much time on a proof of concept.
+
+This is Minesweeper. You win by revealing all the tiles on the board that are not mines. You can right click to put down flags,
+denoted by X's on the game board. Flags are used to keep track of potential mines. If you click on a mine, you lose, and have to
+restart. Any numbers revealed represent the number of mines around that position.
+
+Although fully functional, it is difficult to play because the text is small. I'd like to make a V2 sometime, with sounds,
+difficulty, and a larger game board that is more fun to use. But that is for another day.
+
+To compile, I used g++, with the following: 
+
+g++ minesweeper.cpp -o minesweeper.exe -static
+
+It is good practice not to trust random .exe's found, and compile things yourself. 
+Alas, I have included an .exe for those who live dangerously. And the lazy.
+
+--------------------------------------------------------------------------------------------------------------
+
+Dev log and original description below:
 
 Originally a project to determine how quickly I could make an extremely simple minesweeper clone in C++,
 this project evolved into me wanting to create a fully functioning text-based minesweeper clone, and 
@@ -33,11 +56,3 @@ The searching algorithm now more closely mimics the original.
 
 As of 8/21/2023, the player can now win, but it needs fine tuning. The player can also place down flags. I have removed
 many of the debug messages, and I don't think any should pop up anymore.
-
-To compile, I used g++, with the following: 
-
-g++ minesweeper.cpp -o minesweeper.exe -static
-
-It is good practice not to trust random .exe's found, and compile things yourself. 
-
-You can also live dangerously, if you want. So, I will include the .exe when it's all done.
